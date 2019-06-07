@@ -287,6 +287,19 @@ function getPageScript() {
       inLog = false;
     }
 
+    var permittedEventHandlers = ["onfullscreenchange", "onvisibilitychange", "onblur", "onfocus", "oncanplay", "oncanplaythrough",
+                                  "onchange", "onclick", "ondrag", "ondragend", "ondragenter", "ondragexit", "ondragleave", "ondragover",
+                                  "ondragstart", "ondrop", "ondurationchange", "ongotpointercapture", "oninput", "onkeydown", "onkeypress",
+                                  "onkeyup", "onload", "onmousedown", "onmouseenter", "onmouseleave", "onmousemove", "onmouseout", "onmouseover",
+                                  "onmouseup", "onpause", "onplay", "onpointerdown", "onpointermove", "onpointermove", "onpointerup", "onpointercancel",
+                                  "onpointerover", "onpointerout", "onpointerenter", "onpointerleave", "onreset", "onresize", "onscroll", "onselect",
+                                  "onselectstart", "onselectionchange", "ontransitioncancel", "ontransitionend", "animationcancel", "animationend", 
+                                  "animationiteration", "animationstart", "drag", "dragend", "dragenter", "dragexit", "dragleave", "dragover",
+                                  "dragstart", "drop", "keydown", "keypress", "keyup", "gotpointercapture", "lostpointercapture", "pointercancel",
+                                  "pointerdown", "pointerenter", "pointerleave", "pointerlockchange", "pointerlockerror", "pointermove", "pointerout",
+                                  "pointerover", "pointerup", "touchcancel", "touchend", "touchmove", "touchstart", "transitioncancel", "transitionend",
+                                  "transitionrun", "transitionstart"];
+
     // For functions
     function logCall(instrumentedFunctionName, args, callContext, logSettings) {
       if(inLog)
@@ -304,6 +317,19 @@ function getPageScript() {
         var serialArgs = [ ];
         for(var i = 0; i < args.length; i++)
           serialArgs.push(serializeObject(args[i], !!logSettings.logFunctionsAsStrings));
+        
+        console.log("starts here");
+        console.log(instrumentedFunctionName);
+        console.log(serialArgs.length);
+        console.log(serialArgs[0]);
+        console.log(permittedEventHandlers.indexOf(serialArgs[0]));
+        console.log("ends here");
+
+        if ((instrumentedFunctionName === "EventTarget.addEventListener")  && (serialArgs.length > 0) && (permittedEventHandlers.indexOf(serialArgs[0]) === -1)){
+          inLog = false;
+          return;
+        }
+
         var msg = {
           operation: "call",
           symbol: instrumentedFunctionName,
@@ -645,6 +671,67 @@ function getPageScript() {
     instrumentObject(window.AnalyserNode.prototype, "AnalyserNode");
     instrumentObject(window.GainNode.prototype, "GainNode");
     instrumentObject(window.ScriptProcessorNode.prototype, "ScriptProcessorNode");
+    
+    // Access to WebGL
+    instrumentObject(window.WebGLRenderingContext.prototype, "WebGLRenderingContext");
+    instrumentObject(window.WebGL2RenderingContext.prototype, "WebGL2RenderingContext");
+    instrumentObject(window.WebGLActiveInfo.prototype, "WebGLActiveInfo");
+    instrumentObject(window.WebGLBuffer.prototype, "WebGLBuffer");
+    instrumentObject(window.WebGLContextEvent.prototype, "WebGLContextEvent");
+    instrumentObject(window.WebGLFramebuffer.prototype, "WebGLFramebuffer");
+    instrumentObject(window.WebGLProgram.prototype, "WebGLProgram");
+    instrumentObject(window.WebGLQuery.prototype, "WebGLQuery");
+    instrumentObject(window.WebGLRenderbuffer.prototype, "WebGLRenderbuffer");
+    instrumentObject(window.WebGLSampler.prototype, "WebGLSampler");
+    instrumentObject(window.WebGLShader.prototype, "WebGLShader");
+    instrumentObject(window.WebGLShaderPrecisionFormat.prototype, "WebGLShaderPrecisionFormat");
+    instrumentObject(window.WebGLSync.prototype, "WebGLSync");
+    instrumentObject(window.WebGLTexture.prototype, "WebGLTexture");
+    instrumentObject(window.WebGLTransformFeedback.prototype, "WebGLTransformFeedback");
+    instrumentObject(window.WebGLUniformLocation.prototype, "WebGLUniformLocation");
+    instrumentObject(window.WebGLVertexArrayObject.prototype, "WebGLVertexArrayObject");
+    
+    // Access to Animation
+    instrumentObject(window.Animation.prototype, "Animation");
+
+    // Access to Document
+    var propertiesToInstrument = [ "createComment", "createDocumentFragment", "createElement",
+                                  "createTextNode", "createTouch", "createTouchList",
+                                  "getAnimations", "getElementsByClassName", "getElementsByTagName",
+                                  "hasStorageAccess", "getElementById", "querySelector",
+                                  "querySelectorAll", "getElementsByName" ];
+    instrumentObject(
+        window.Document.prototype,
+        "Document",
+        {'propertiesToInstrument': propertiesToInstrument}
+    );
+   
+    var excludedPropertiesForEventTarget = [ "dispatchEvent"];
+    
+    instrumentObject(
+        window.EventTarget.prototype,
+        "EventTarget",
+        {'excludedProperties': excludedPropertiesForEventTarget}
+    );
+
+    // instrumentObject(window.EventTarget.prototype, "EventTarget");
+
+    // /* Monitor new event listeners to top-level objects */
+
+    // var listenerLogSettings = {
+    //     logFunctionsAsStrings: true,
+    //     logCallStack: true,
+    //     propertiesToInstrument: [ "addEventListener" ]
+    // };
+
+    // instrumentObject(window.HTMLBodyElement.prototype, "window.HTMLBodyElement",
+    //     listenerLogSettings);
+
+    // instrumentObject(window.document, "window.document",
+    //     listenerLogSettings);
+
+    // instrumentObject(window, "window",
+    //     listenerLogSettings);
 
     console.log("Successfully started all instrumentation.");
 
