@@ -235,13 +235,21 @@ function getPageScript() {
     }
 
     // Counter to cap # of calls logged for each script/api combination
-    var maxLogCount = 500;
+    var lowCapmaxLogCount = 50;
+    var HighcapmaxLogCount = 500;
     var logCounter = new Object();
+    // Define caps for symbols, not all symbols require 500 calls
+    var highCapSymbols = ["CanvasRenderingContext2D.measureText", "CanvasRenderingContext2D.font"];
+
     function updateCounterAndCheckIfOver(scriptUrl, symbol) {
       var key = scriptUrl + '|' + symbol;
-      if ((key in logCounter) && (logCounter[key] >= maxLogCount)) {
+      if ((highCapSymbols.indexOf(symbol) === -1) && (key in logCounter) && (logCounter[key] >= lowCapmaxLogCount)) {
         return true;
-      } else if (!(key in logCounter)) {
+      } 
+      else if ((highCapSymbols.indexOf(symbol) > -1) && (key in logCounter) && (logCounter[key] >= HighcapmaxLogCount)) {
+        return true;
+      }
+      else if (!(key in logCounter)) {
         logCounter[key] = 1;
       } else {
         logCounter[key] += 1;
@@ -318,13 +326,7 @@ function getPageScript() {
         for(var i = 0; i < args.length; i++)
           serialArgs.push(serializeObject(args[i], !!logSettings.logFunctionsAsStrings));
         
-        console.log("starts here");
-        console.log(instrumentedFunctionName);
-        console.log(serialArgs.length);
-        console.log(serialArgs[0]);
-        console.log(permittedEventHandlers.indexOf(serialArgs[0]));
-        console.log("ends here");
-
+        // Only allow logging for releavnt events
         if ((instrumentedFunctionName === "EventTarget.addEventListener")  && (serialArgs.length > 0) && (permittedEventHandlers.indexOf(serialArgs[0]) === -1)){
           inLog = false;
           return;
@@ -598,7 +600,16 @@ function getPageScript() {
                                 "geolocation", "language", "languages",
                                 "onLine", "oscpu", "platform", "product",
                                 "productSub", "userAgent", "vendorSub",
-                                "vendor" ];
+                                "vendor", "javaEnabled", "permissions"];
+
+    // Access to Navigator methods
+    var navigatorPropertiesToInstrument = [ "getBattery", "vibrate", "sendBeacon"];
+    instrumentObject(
+        window.Navigator.prototype,
+        "Navigator",
+        {'propertiesToInstrument': navigatorPropertiesToInstrument}
+    );
+
     navigatorProperties.forEach(function(property) {
       instrumentObjectProperty(window.navigator, "window.navigator", property);
     });
@@ -706,32 +717,21 @@ function getPageScript() {
         {'propertiesToInstrument': propertiesToInstrument}
     );
    
-    var excludedPropertiesForEventTarget = [ "dispatchEvent"];
+    var includedPropertiesForEventTarget = [ "addEventListener", "removeEventListener"];
     
     instrumentObject(
         window.EventTarget.prototype,
         "EventTarget",
-        {'excludedProperties': excludedPropertiesForEventTarget}
+        {'propertiesToInstrument': includedPropertiesForEventTarget}
     );
 
-    // instrumentObject(window.EventTarget.prototype, "EventTarget");
-
-    // /* Monitor new event listeners to top-level objects */
-
-    // var listenerLogSettings = {
-    //     logFunctionsAsStrings: true,
-    //     logCallStack: true,
-    //     propertiesToInstrument: [ "addEventListener" ]
-    // };
-
-    // instrumentObject(window.HTMLBodyElement.prototype, "window.HTMLBodyElement",
-    //     listenerLogSettings);
-
-    // instrumentObject(window.document, "window.document",
-    //     listenerLogSettings);
-
-    // instrumentObject(window, "window",
-    //     listenerLogSettings);
+    // Access to Performance methods
+    var performanceePropertiesToInstrument = [ "now"];
+    instrumentObject(
+        window.Performance.prototype,
+        "Performance",
+        {'propertiesToInstrument': performanceePropertiesToInstrument}
+    );
 
     console.log("Successfully started all instrumentation.");
 
