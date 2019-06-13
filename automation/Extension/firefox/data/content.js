@@ -307,9 +307,11 @@ function getPageScript() {
                                   "pointerdown", "pointerenter", "pointerleave", "pointerlockchange", "pointerlockerror", "pointermove", "pointerout",
                                   "pointerover", "pointerup", "touchcancel", "touchend", "touchmove", "touchstart", "transitioncancel", "transitionend",
                                   "transitionrun", "transitionstart"];
+    
+    var eventDispatchList = [];                              
 
     // For functions
-    function logCall(instrumentedFunctionName, args, callContext, logSettings) {
+    function logCall(instrumentedFunctionName, args, callContext, logSettings, originalObject) {
       if(inLog)
         return;
       inLog = true;
@@ -326,6 +328,13 @@ function getPageScript() {
         for(var i = 0; i < args.length; i++)
           serialArgs.push(serializeObject(args[i], !!logSettings.logFunctionsAsStrings));
         
+        // Keep a list of events and their respective objects
+        if (instrumentedFunctionName === "EventTarget.addEventListener"){
+          console.log("event listeners objects" + ' , ' + serialArgs[0] + ' , ' + originalObject);
+          eventDispatchList.push({'eventName' : serialArgs[0], 'object' : originalObject});
+          // originalObject.dispatchEvent(new Event(serialArgs[0]));
+        }
+
         // Only allow logging for releavnt events
         if ((instrumentedFunctionName === "EventTarget.addEventListener")  && (serialArgs.length > 0) && (permittedEventHandlers.indexOf(serialArgs[0]) === -1)){
           inLog = false;
@@ -478,10 +487,10 @@ function getPageScript() {
     // This helper function returns a wrapper around `func` which logs calls
     // to `func`. `objectName` and `methodName` are used strictly to identify
     // which object method `func` is coming from in the logs
-    function instrumentFunction(objectName, methodName, func, logSettings) {
+    function instrumentFunction(objectName, methodName, func, logSettings, originalObject) {
       return function () {
         var callContext = getOriginatingScriptContext(!!logSettings.logCallStack);
-        logCall(objectName + '.' + methodName, arguments, callContext, logSettings);
+        logCall(objectName + '.' + methodName, arguments, callContext, logSettings, originalObject);
         return func.apply(this, arguments);
       };
     }
@@ -529,7 +538,8 @@ function getPageScript() {
             // * Returned objects may be instrumented if recursive
             //   instrumentation is enabled and this isn't at the depth limit.
             if (typeof origProperty == 'function') {
-              return instrumentFunction(objectName, propertyName, origProperty, logSettings);
+              // `this` object here has is the one on which method/event is called
+              return instrumentFunction(objectName, propertyName, origProperty, logSettings, this);
             } else if (typeof origProperty == 'object' &&
               !!logSettings.recursive &&
               (!('depth' in logSettings) || logSettings.depth > 0)) {
@@ -603,7 +613,7 @@ function getPageScript() {
                                 "vendor", "javaEnabled", "permissions"];
 
     // Access to Navigator methods
-    var navigatorPropertiesToInstrument = [ "getBattery", "vibrate", "sendBeacon"];
+    var navigatorPropertiesToInstrument = ["vibrate", "sendBeacon"];
     instrumentObject(
         window.Navigator.prototype,
         "Navigator",
@@ -684,8 +694,16 @@ function getPageScript() {
     instrumentObject(window.ScriptProcessorNode.prototype, "ScriptProcessorNode");
     
     // Access to WebGL
-    instrumentObject(window.WebGLRenderingContext.prototype, "WebGLRenderingContext");
-    instrumentObject(window.WebGL2RenderingContext.prototype, "WebGL2RenderingContext");
+    // instrumentObject(window.WebGLRenderingContext.prototype, "WebGLRenderingContext");
+    // instrumentObject(window.WebGL2RenderingContext.prototype, "WebGL2RenderingContext");
+
+    // Access to navigator properties
+    var webGLProperties = [ "INVALID_FRAMEBUFFER_OPERATION", "UNPACK_FLIP_Y_WEBGL", "UNPACK_PREMULTIPLY_ALPHA_WEBGL" ,"BROWSER_DEFAULT_WEBGL", "UNPACK_COLORSPACE_CONVERSION_WEBGL", "CONTEXT_LOST_WEBGL"];
+
+    webGLProperties.forEach(function(property) {
+    instrumentObjectProperty(window.WebGLRenderingContext, "window.WebGLRenderingContext", property);
+    });
+
     instrumentObject(window.WebGLActiveInfo.prototype, "WebGLActiveInfo");
     instrumentObject(window.WebGLBuffer.prototype, "WebGLBuffer");
     instrumentObject(window.WebGLContextEvent.prototype, "WebGLContextEvent");
@@ -707,10 +725,8 @@ function getPageScript() {
 
     // Access to Document
     var propertiesToInstrument = [ "createComment", "createDocumentFragment", "createElement",
-                                  "createTextNode", "createTouch", "createTouchList",
-                                  "getAnimations", "getElementsByClassName", "getElementsByTagName",
-                                  "hasStorageAccess", "getElementById", "querySelector",
-                                  "querySelectorAll", "getElementsByName" ];
+                                  "createTextNode", "getElementsByClassName", "getElementsByTagName",
+                                  "getElementById", "querySelector", "querySelectorAll"];
     instrumentObject(
         window.Document.prototype,
         "Document",
@@ -734,7 +750,15 @@ function getPageScript() {
     );
 
     console.log("Successfully started all instrumentation.");
-
+    
+    // Dispatch all of the added events to window, documents, and elements
+    setTimeout(function(){ 
+      eventDispatchList.forEach(function (evnt) {
+        console.log('Dispatching event for Object: ' + evnt['object'] + ' and Event: ' + evnt['eventName']);
+        evnt['object'].dispatchEvent(new Event(evnt['eventName']));
+      });
+    }, 10000);
+    
   } + "());";
 }
 
