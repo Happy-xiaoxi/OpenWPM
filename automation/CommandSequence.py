@@ -128,6 +128,16 @@ class CommandSequence:
                                         "the dump page source command", self)
         command = ('DUMP_PAGE_SOURCE', suffix)
         self.commands_with_timeout.append((command, timeout))
+    
+    def scroll_page(self, suffix='', timeout=30):
+        """Does random interactions with the page to replicate `user activity`
+        so that scripts may execute but it is not guranted."""
+        self.total_timeout += timeout
+        if not self.contains_get_or_browse:
+            raise CommandExecutionError("No get or browse request preceding "
+                                        "the scroll page command", self)
+        command = ('SCROLL_PAGE', suffix)
+        self.commands_with_timeout.append((command, timeout))
 
     def recursive_dump_page_source(self, suffix='', timeout=30):
         """Dumps rendered source of current page visit to 'sources' dir.

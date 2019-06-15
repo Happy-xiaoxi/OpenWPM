@@ -693,16 +693,33 @@ function getPageScript() {
     instrumentObject(window.GainNode.prototype, "GainNode");
     instrumentObject(window.ScriptProcessorNode.prototype, "ScriptProcessorNode");
     
+
+    var includedWebGLProperties = [ "canvas", "drawingBufferWidth", "drawingBufferHeight", "getContextAttributes", "isContextLost", 
+                                "scissor", "viewport", "activeTexture", "blendColor", "blendEquation", "blendEquationSeparate",
+                                "blendFunc", "blendFuncSeparate", "clearColor", "clearDepth", "clearStencil", "colorMask", "cullFace",
+                                "depthFunc", "depthMask", "depthRange", "disable", "enable", "frontFace", "getParameter", "getError",
+                                "hint", "isEnabled", "lineWidth", "pixelStorei", "polygonOffset", "sampleCoverage", "stencilFunc", "stencilFuncSeparate",
+                                "stencilMask", "stencilMaskSeparate", "stencilOp", "stencilOpSeparate", "bindBuffer", "bufferData", 
+                                "bufferSubData", "createBuffer", "deleteBuffer", "getBufferParameter", "isBuffer", "bindFramebuffer", 
+                                "checkFramebufferStatus", "createFramebuffer", "deleteFramebuffer", "framebufferRenderbuffer", 
+                                "framebufferTexture2D", "getFramebufferAttachmentParameter", "isFramebuffer", "readPixels", "bindRenderbuffer",
+                                "createRenderbuffer", "deleteRenderbuffer", "getRenderbufferParameter", "isRenderbuffer", "renderbufferStorage",
+                                "bindTexture", "compressedTexImage2D", "compressedTexSubImage2D", "copyTexImage2D", "copyTexSubImage2D",
+                                "createTexture", "deleteTexture", "generateMipmap", "getTexParameter", "isTexture", "texImage2D", "texSubImage2D",
+                                "texParameterf", "texParameteri", "attachShader", "bindAttribLocation", "compileShader", "createProgram", "createShader",
+                                "deleteProgram", "deleteShader", "detachShader", "getAttachedShaders", "getProgramParameter", "getProgramInfoLog",
+                                "getShaderParameter", "getShaderPrecisionFormat", "getShaderInfoLog", "getShaderSource", "isProgram", "isShader",
+                                "linkProgram", "shaderSource", "useProgram", "validateProgram", "disableVertexAttribArray", "enableVertexAttribArray",
+                                "getActiveAttrib", "getActiveUniform", "getAttribLocation", "getUniform", "getUniformLocation", "getVertexAttrib", 
+                                "getVertexAttribOffset", "uniform1f", "uniform1fv", "uniform1i", "uniform1iv", "uniform2f", "uniform2fv", "uniform2i",
+                                "uniform2iv", "uniform3f", "uniform3fv", "uniform3i", "uniform3iv", "uniform4f", "uniform4fv", "uniform4i", "uniform4iv", 
+                                "uniformMatrix2fv", "uniformMatrix3fv", "uniformMatrix4fv", "vertexAttrib1f", "vertexAttrib2f", "vertexAttrib3f", "vertexAttrib4f",
+                                "vertexAttrib1fv", "vertexAttrib2fv", "vertexAttrib3fv", "vertexAttrib4fv", "vertexAttribPointer", "clear", "drawArrays",
+                                "drawElements", "finish", "flush", "getSupportedExtensions", "getExtension"]
+
     // Access to WebGL
-    // instrumentObject(window.WebGLRenderingContext.prototype, "WebGLRenderingContext");
-    // instrumentObject(window.WebGL2RenderingContext.prototype, "WebGL2RenderingContext");
-
-    // Access to navigator properties
-    var webGLProperties = [ "INVALID_FRAMEBUFFER_OPERATION", "UNPACK_FLIP_Y_WEBGL", "UNPACK_PREMULTIPLY_ALPHA_WEBGL" ,"BROWSER_DEFAULT_WEBGL", "UNPACK_COLORSPACE_CONVERSION_WEBGL", "CONTEXT_LOST_WEBGL"];
-
-    webGLProperties.forEach(function(property) {
-    instrumentObjectProperty(window.WebGLRenderingContext, "window.WebGLRenderingContext", property);
-    });
+    instrumentObject(window.WebGLRenderingContext.prototype, "WebGLRenderingContext", {'propertiesToInstrument': includedWebGLProperties});
+    instrumentObject(window.WebGL2RenderingContext.prototype, "WebGL2RenderingContext", {'propertiesToInstrument': includedWebGLProperties});
 
     instrumentObject(window.WebGLActiveInfo.prototype, "WebGLActiveInfo");
     instrumentObject(window.WebGLBuffer.prototype, "WebGLBuffer");

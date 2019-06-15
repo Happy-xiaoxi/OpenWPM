@@ -47,6 +47,14 @@ def execute_command(command, webdriver, browser_settings, browser_params,
         browser_commands.dump_page_source(
             visit_id=command[2], driver=webdriver,
             manager_params=manager_params, suffix=command[1])
+    
+    if command[0] == 'SCROLL_PAGE':
+        # print "Command: [ALL] :", command
+        # print "Command: [2] : ", command[2]
+        # print "Command: [1] : ", command[1]
+        # print "\n"
+        browser_commands.scroll_page(driver=webdriver, 
+            manager_params=manager_params, crawl_id=browser_params['crawl_id'])
 
     if command[0] == 'RECURSIVE_DUMP_PAGE_SOURCE':
         browser_commands.recursive_dump_page_source(

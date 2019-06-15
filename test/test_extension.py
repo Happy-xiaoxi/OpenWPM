@@ -61,6 +61,24 @@ CANVAS_CALLS = {
      '', '{"0":"BrowserLeaks,com <canvas> 1.0","1":2,"2":15}')
 }
 
+# WebGL Fingerprinting DB calls and property sets
+WEBGL_TEST_URL = u"%s/webgl_fingerprinting_test_page.html" % utilities.BASE_TEST_URL
+
+WEBGL_CALLS = {
+    (WEBGL_TEST_URL, 'WebGLRenderingContext.clearColor', 'call',
+     '', '{"0":0,"1":0,"2":0,"3":1}'),
+    (WEBGL_TEST_URL, 'WebGLRenderingContext.depthFunc', 'call',
+     '', '{"0":515}'),
+    (WEBGL_TEST_URL, 'WebGLRenderingContext.getParameter', 'call',
+     '', '{"0":7936}'),
+    (WEBGL_TEST_URL, 'WebGLRenderingContext.createShader', 'call',
+     '', '{"0":35632}'),
+    (WEBGL_TEST_URL, 'WebGLRenderingContext.createProgram', 'call',
+     '', None),
+    (WEBGL_TEST_URL, 'WebGLRenderingContext.getAttribLocation', 'call',
+    '','{"0":"{}","1":"attrVertex"}')
+}
+
 WEBRTC_TEST_URL = u"%s/webrtc_localip.html" % utilities.BASE_TEST_URL
 
 WEBRTC_CALLS = {
@@ -178,7 +196,8 @@ class TestExtension(OpenWPMTest):
         observed_symbols = set()
         for script_url, symbol in rows:
             assert script_url == test_url
-            observed_symbols.add(symbol)
+            if not symbol.startswith('Document'):
+                observed_symbols.add(symbol)
         assert PROPERTIES == observed_symbols
 
     def test_canvas_fingerprinting(self):
@@ -189,8 +208,21 @@ class TestExtension(OpenWPMTest):
         for row in rows:
             item = (row['script_url'], row['symbol'], row['operation'],
                     row['value'], row['arguments'])
-            observed_rows.add(item)
+            if row['symbol'].startswith('CanvasRenderingContext2D') or row['symbol'].startswith('HTMLCanvasElement'):
+                observed_rows.add(item)
         assert CANVAS_CALLS == observed_rows
+    
+    def test_webgl_fingerprinting(self):
+        db = self.visit('/webgl_fingerprinting_test_page.html')
+        # Check that all calls and methods are recorded
+        rows = db_utils.get_javascript_entries(db)
+        observed_rows = set()
+        for row in rows:
+            item = (row['script_url'], row['symbol'], row['operation'],
+                    row['value'], row['arguments'])
+            if row['symbol'].startswith('WebGLRenderingContext'):
+                observed_rows.add(item)
+        assert WEBGL_CALLS == observed_rows
 
     def test_extension_gets_correct_visit_id(self):
         manager_params, browser_params = self.get_config()
@@ -250,7 +282,8 @@ class TestExtension(OpenWPMTest):
             else:
                 item = (row['script_url'], row['symbol'], row['operation'],
                         row['value'], row['arguments'])
-                observed_rows.add(item)
+                if row['symbol'].startswith('RTCPeerConnection'):
+                    observed_rows.add(item)
         assert WEBRTC_CALLS == observed_rows
 
     @pytest.mark.skipif(
@@ -262,7 +295,8 @@ class TestExtension(OpenWPMTest):
         rows = db_utils.get_javascript_entries(db)
         observed_symbols = set()
         for item in rows:
-            observed_symbols.add(item[1])
+            if not item['symbol'].startswith('Document'):
+                observed_symbols.add(item[1])
         assert AUDIO_SYMBOLS == observed_symbols
 
     def test_js_call_stack(self):

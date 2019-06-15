@@ -77,3 +77,4 @@ docs/_build/
 
 # npm packages
 node_modules
+demo.py

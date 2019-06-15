@@ -40,6 +40,14 @@ def scroll_to_bottom(driver):
         pass
 
 
+def scroll_to_top(driver):
+    try:
+        driver.execute_script(
+            "window.scrollTo(0, 0);")
+    except WebDriverException:
+        pass
+
+
 def is_loaded(webdriver):
     return (webdriver.execute_script(
         "return document.readyState") == "complete")
@@ -201,6 +209,14 @@ def click_to_element(element, sleep_after=0.5):
 def move_to_element(driver, element):
     try:
         ActionChains(driver).move_to_element(element).perform()
+    except WebDriverException:
+        pass
+
+
+def scroll_to_position(driver, x, y):
+    try:
+        driver.execute_script("window.scrollTo(%s, %s);" % (
+            x, y))
     except WebDriverException:
         pass
 

@@ -25,7 +25,9 @@ from .utils.lso import get_flash_cookies
 from .utils.webdriver_extensions import (execute_in_all_frames,
                                          execute_script_with_retry,
                                          get_intra_links, is_displayed,
-                                         scroll_down, wait_until_loaded)
+                                         scroll_down, wait_until_loaded,
+                                         scroll_to_bottom, scroll_to_top,
+                                         scroll_to_position)
 
 # Constants for bot mitigation
 NUM_MOUSE_MOVES = 10  # Times to randomly move the mouse
@@ -364,6 +366,77 @@ def dump_page_source(visit_id, driver, manager_params, suffix=''):
     with open(outfile, 'wb') as f:
         f.write(driver.page_source.encode('utf8'))
         f.write(b'\n')
+
+
+def organic_movement(webdriver):
+    """ performs some random movements on the webpage """
+
+    #  move the randomly around a number of times
+    scroll_height = webdriver.execute_script("return document.body.scrollHeight") 
+    scroll_width = webdriver.execute_script("return document.body.scrollWidth")
+
+    num_moves = 0
+    num_fails = 0
+
+    while num_moves < NUM_MOUSE_MOVES + 1 and num_fails < NUM_MOUSE_MOVES:
+        try:
+            if num_moves == 0:  # move to the center of the screen
+                x = int(round(scroll_height / 2))
+                y = int(round(scroll_width / 2))
+            else:  # move a random amount in some direction
+                move_x_1 = random.randint(0, scroll_width)
+                move_x_2 = random.randint(0, scroll_width)
+                move_y_1 = random.randint(0, scroll_height)
+                move_y_2 = random.randint(0, scroll_height)
+                
+                min_x, max_x = min(move_x_1, move_x_2), max(move_x_1, move_x_2)
+                min_y, max_y = min(move_y_1, move_y_2), max(move_y_1, move_y_2)
+
+                if min_x == max_x:
+                    x = min_x
+                else:
+                    x = random.randint(min_x, max_x)
+                
+                if min_y == max_y:
+                    y = min_y
+                else:
+                    y = random.randint(min_y, max_y)
+            scroll_to_position(webdriver, x, y)
+            time.sleep(0.3)
+            num_moves += 1
+        except MoveTargetOutOfBoundsException:
+            num_fails += 1
+            pass
+
+    # bot mitigation 2: scroll in random intervals down page
+    scroll_down(webdriver)
+
+    # bot mitigation 3: randomly wait so page visits happen with irregularity
+    time.sleep(random.randrange(RANDOM_SLEEP_LOW, RANDOM_SLEEP_HIGH))
+
+ 
+def scroll_page(driver, crawl_id, manager_params, suffix=''):
+    logger = loggingclient(*manager_params['logger_address'])
+
+    if suffix != '':
+        suffix = '-' + suffix
+    
+    try:
+        # Scrolling the page to bottom and sleep for 1 second
+        scroll_to_bottom(driver)
+        time.sleep(0.3)
+        # Scrolling the page to top and sleep for 1 second
+        scroll_to_top(driver)
+        time.sleep(0.3)
+        # Doing some random movement for `organic` activity on the page.
+        organic_movement(driver)
+    except WebDriverException:
+        excp = traceback.format_exception(*sys.exc_info())
+        logger.error(
+            "BROWSER %i: Exception while scrolling the page \n %s" %
+            (crawl_id, ''.join(excp)))
+
+    return
 
 
 def recursive_dump_page_source(visit_id, driver, manager_params, suffix=''):
