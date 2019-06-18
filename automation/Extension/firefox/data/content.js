@@ -740,6 +740,18 @@ function getPageScript() {
     // Access to Animation
     instrumentObject(window.Animation.prototype, "Animation");
 
+    // Access to Node
+
+    var excludedNodeProperties = [ "ELEMENT_NODE", "ATTRIBUTE_NODE", "TEXT_NODE",
+                               "CDATA_SECTION_NODE", "ENTITY_REFERENCE_NODE", "ENTITY_NODE",
+                               "PROCESSING_INSTRUCTION_NODE", "COMMENT_NODE", "DOCUMENT_NODE",
+                               "DOCUMENT_TYPE_NODE", "DOCUMENT_FRAGMENT_NODE", "NOTATION_NODE",
+                               "DOCUMENT_POSITION_DISCONNECTED", "DOCUMENT_POSITION_PRECEDING",
+                               "DOCUMENT_POSITION_FOLLOWING", "DOCUMENT_POSITION_CONTAINS",
+                               "DOCUMENT_POSITION_CONTAINED_BY", "DOCUMENT_POSITION_IMPLEMENTATION_SPECIFIC", "dispatchEvent" ];
+    
+    instrumentObject(window.Node.prototype, "Node", {'excludedProperties': excludedNodeProperties});
+
     // Access to Document
     var propertiesToInstrument = [ "createComment", "createDocumentFragment", "createElement",
                                   "createTextNode", "getElementsByClassName", "getElementsByTagName",
@@ -750,12 +762,14 @@ function getPageScript() {
         {'propertiesToInstrument': propertiesToInstrument}
     );
    
-    var includedPropertiesForEventTarget = [ "addEventListener", "removeEventListener"];
+    var includedPropertiesForEventTarget = [ "addEventListener"];
+    var excludedPropertiesForEventTarget = [ "dispatchEvent"];
     
     instrumentObject(
         window.EventTarget.prototype,
         "EventTarget",
-        {'propertiesToInstrument': includedPropertiesForEventTarget}
+        {'propertiesToInstrument': includedPropertiesForEventTarget},
+        {'excludedProperties': excludedPropertiesForEventTarget}
     );
 
     // Access to Performance methods
