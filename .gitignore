@@ -78,3 +78,7 @@ docs/_build/
 # npm packages
 node_modules
 demo.py
+test/test_pages/math_tag_sample_script.js
+.DS_Store
+.vscode/*
+automation/Extension/firefox/data/temp-webgl-obj.js

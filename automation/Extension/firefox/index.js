@@ -25,6 +25,7 @@ exports.main = function(options, callbacks) {
       js_instrument:true,
       http_instrument:true,
       save_javascript:true,
+      save_documents:true,
       save_all_content:true,
       testing:true,
       crawl_id:''
@@ -46,6 +47,6 @@ exports.main = function(options, callbacks) {
   if (config['http_instrument']) {
     loggingDB.logDebug("HTTP Instrumentation enabled");
     httpInstrument.run(config['crawl_id'], config['save_javascript'],
-                       config['save_all_content']);
+                       config['save_all_content'], config['save_documents']);
   }
 };

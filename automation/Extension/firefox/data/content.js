@@ -617,11 +617,14 @@ function getPageScript() {
     instrumentObject(
         window.Navigator.prototype,
         "Navigator",
-        {'propertiesToInstrument': navigatorPropertiesToInstrument}
+        {'propertiesToInstrument': navigatorPropertiesToInstrument, 
+        logCallStack: true}
     );
 
     navigatorProperties.forEach(function(property) {
-      instrumentObjectProperty(window.navigator, "window.navigator", property);
+      instrumentObjectProperty(window.navigator, "window.navigator", property, {
+        logCallStack: true
+      });
     });
 
     // Access to screen properties
@@ -629,7 +632,9 @@ function getPageScript() {
     // TODO: why do we instrument only two screen properties
     var screenProperties =  [ "pixelDepth", "colorDepth" ];
     screenProperties.forEach(function(property) {
-      instrumentObjectProperty(window.screen, "window.screen", property);
+      instrumentObjectProperty(window.screen, "window.screen", property, {
+        logCallStack: true
+      });
     });
 
     // Access to plugins
@@ -639,7 +644,9 @@ function getPageScript() {
       pluginProperties.forEach(function(property) {
         instrumentObjectProperty(
             window.navigator.plugins[pluginName],
-            "window.navigator.plugins[" + pluginName + "]", property);
+            "window.navigator.plugins[" + pluginName + "]", property, {
+              logCallStack: true
+            });
       });
     }
 
@@ -650,7 +657,9 @@ function getPageScript() {
       mimeTypeProperties.forEach(function(property) {
         instrumentObjectProperty(
             window.navigator.mimeTypes[mimeTypeName],
-            "window.navigator.mimeTypes[" + mimeTypeName + "]", property);
+            "window.navigator.mimeTypes[" + mimeTypeName + "]", property, {
+              logCallStack: true
+            });
       });
     }
     // Name, localStorage, and sessionsStorage logging
@@ -660,9 +669,13 @@ function getPageScript() {
     // of a get for the localStorage object followed by a getItem/setItem for the Storage object.
     var windowProperties = [ "name", "localStorage", "sessionStorage" ];
     windowProperties.forEach(function(property) {
-      instrumentObjectProperty(window, "window", property);
+      instrumentObjectProperty(window, "window", property, {
+        logCallStack: true
+      });
     });
-    instrumentObject(window.Storage.prototype, "window.Storage");
+    instrumentObject(window.Storage.prototype, "window.Storage", {
+      logCallStack: true
+    });
 
     // Access to document.cookie
     instrumentObjectProperty(window.document, "window.document", "cookie", {
@@ -670,28 +683,42 @@ function getPageScript() {
     });
 
     // Access to canvas
-    instrumentObject(window.HTMLCanvasElement.prototype,"HTMLCanvasElement");
+    instrumentObject(window.HTMLCanvasElement.prototype,"HTMLCanvasElement", {logCallStack: true});
 
-    var excludedProperties = [ "quadraticCurveTo", "lineTo", "transform",
-                               "globalAlpha", "moveTo", "drawImage",
-                               "setTransform", "clearRect", "closePath",
-                               "beginPath", "canvas", "translate" ];
+    // var excludedProperties = [ "quadraticCurveTo", "lineTo", "transform",
+    //                            "globalAlpha", "moveTo", "drawImage",
+    //                            "setTransform", "clearRect", "closePath",
+    //                            "beginPath", "canvas", "translate" ];
     instrumentObject(
         window.CanvasRenderingContext2D.prototype,
         "CanvasRenderingContext2D",
-        {'excludedProperties': excludedProperties}
+        {logCallStack: true}
     );
 
     // Access to webRTC
-    instrumentObject(window.RTCPeerConnection.prototype,"RTCPeerConnection");
+    instrumentObject(window.RTCPeerConnection.prototype,"RTCPeerConnection", {
+      logCallStack: true
+    });
 
     // Access to Audio API
-    instrumentObject(window.AudioContext.prototype, "AudioContext");
-    instrumentObject(window.OfflineAudioContext.prototype, "OfflineAudioContext");
-    instrumentObject(window.OscillatorNode.prototype, "OscillatorNode");
-    instrumentObject(window.AnalyserNode.prototype, "AnalyserNode");
-    instrumentObject(window.GainNode.prototype, "GainNode");
-    instrumentObject(window.ScriptProcessorNode.prototype, "ScriptProcessorNode");
+    instrumentObject(window.AudioContext.prototype, "AudioContext", {
+      logCallStack: true
+    });
+    instrumentObject(window.OfflineAudioContext.prototype, "OfflineAudioContext", {
+      logCallStack: true
+    });
+    instrumentObject(window.OscillatorNode.prototype, "OscillatorNode", {
+      logCallStack: true
+    });
+    instrumentObject(window.AnalyserNode.prototype, "AnalyserNode", {
+      logCallStack: true
+    });
+    instrumentObject(window.GainNode.prototype, "GainNode", {
+      logCallStack: true
+    });
+    instrumentObject(window.ScriptProcessorNode.prototype, "ScriptProcessorNode", {
+      logCallStack: true
+    });
     
 
     var includedWebGLProperties = [ "canvas", "drawingBufferWidth", "drawingBufferHeight", "getContextAttributes", "isContextLost", 
@@ -718,27 +745,59 @@ function getPageScript() {
                                 "drawElements", "finish", "flush", "getSupportedExtensions", "getExtension"]
 
     // Access to WebGL
-    instrumentObject(window.WebGLRenderingContext.prototype, "WebGLRenderingContext", {'propertiesToInstrument': includedWebGLProperties});
-    instrumentObject(window.WebGL2RenderingContext.prototype, "WebGL2RenderingContext", {'propertiesToInstrument': includedWebGLProperties});
+    instrumentObject(window.WebGLRenderingContext.prototype, "WebGLRenderingContext", {'propertiesToInstrument': includedWebGLProperties, logCallStack: true});
+    instrumentObject(window.WebGL2RenderingContext.prototype, "WebGL2RenderingContext", {'propertiesToInstrument': includedWebGLProperties, logCallStack: true});
 
-    instrumentObject(window.WebGLActiveInfo.prototype, "WebGLActiveInfo");
-    instrumentObject(window.WebGLBuffer.prototype, "WebGLBuffer");
-    instrumentObject(window.WebGLContextEvent.prototype, "WebGLContextEvent");
-    instrumentObject(window.WebGLFramebuffer.prototype, "WebGLFramebuffer");
-    instrumentObject(window.WebGLProgram.prototype, "WebGLProgram");
-    instrumentObject(window.WebGLQuery.prototype, "WebGLQuery");
-    instrumentObject(window.WebGLRenderbuffer.prototype, "WebGLRenderbuffer");
-    instrumentObject(window.WebGLSampler.prototype, "WebGLSampler");
-    instrumentObject(window.WebGLShader.prototype, "WebGLShader");
-    instrumentObject(window.WebGLShaderPrecisionFormat.prototype, "WebGLShaderPrecisionFormat");
-    instrumentObject(window.WebGLSync.prototype, "WebGLSync");
-    instrumentObject(window.WebGLTexture.prototype, "WebGLTexture");
-    instrumentObject(window.WebGLTransformFeedback.prototype, "WebGLTransformFeedback");
-    instrumentObject(window.WebGLUniformLocation.prototype, "WebGLUniformLocation");
-    instrumentObject(window.WebGLVertexArrayObject.prototype, "WebGLVertexArrayObject");
+    instrumentObject(window.WebGLActiveInfo.prototype, "WebGLActiveInfo", {
+      logCallStack: true
+    });
+    instrumentObject(window.WebGLBuffer.prototype, "WebGLBuffer", {
+      logCallStack: true
+    });
+    instrumentObject(window.WebGLContextEvent.prototype, "WebGLContextEvent", {
+      logCallStack: true
+    });
+    instrumentObject(window.WebGLFramebuffer.prototype, "WebGLFramebuffer", {
+      logCallStack: true
+    });
+    instrumentObject(window.WebGLProgram.prototype, "WebGLProgram", {
+      logCallStack: true
+    });
+    instrumentObject(window.WebGLQuery.prototype, "WebGLQuery", {
+      logCallStack: true
+    });
+    instrumentObject(window.WebGLRenderbuffer.prototype, "WebGLRenderbuffer", {
+      logCallStack: true
+    });
+    instrumentObject(window.WebGLSampler.prototype, "WebGLSampler", {
+      logCallStack: true
+    });
+    instrumentObject(window.WebGLShader.prototype, "WebGLShader", {
+      logCallStack: true
+    });
+    instrumentObject(window.WebGLShaderPrecisionFormat.prototype, "WebGLShaderPrecisionFormat", {
+      logCallStack: true
+    });
+    instrumentObject(window.WebGLSync.prototype, "WebGLSync", {
+      logCallStack: true
+    });
+    instrumentObject(window.WebGLTexture.prototype, "WebGLTexture", {
+      logCallStack: true
+    });
+    instrumentObject(window.WebGLTransformFeedback.prototype, "WebGLTransformFeedback", {
+      logCallStack: true
+    });
+    instrumentObject(window.WebGLUniformLocation.prototype, "WebGLUniformLocation", {
+      logCallStack: true
+    });
+    instrumentObject(window.WebGLVertexArrayObject.prototype, "WebGLVertexArrayObject", {
+      logCallStack: true
+    });
     
     // Access to Animation
-    instrumentObject(window.Animation.prototype, "Animation");
+    instrumentObject(window.Animation.prototype, "Animation", {
+      logCallStack: true
+    });
 
     // Access to Node
 
@@ -750,7 +809,7 @@ function getPageScript() {
                                "DOCUMENT_POSITION_FOLLOWING", "DOCUMENT_POSITION_CONTAINS",
                                "DOCUMENT_POSITION_CONTAINED_BY", "DOCUMENT_POSITION_IMPLEMENTATION_SPECIFIC", "dispatchEvent" ];
     
-    instrumentObject(window.Node.prototype, "Node", {'excludedProperties': excludedNodeProperties});
+    instrumentObject(window.Node.prototype, "Node", {'excludedProperties': excludedNodeProperties, logCallStack: true});
 
     // Access to Document
     var propertiesToInstrument = [ "createComment", "createDocumentFragment", "createElement",
@@ -759,7 +818,7 @@ function getPageScript() {
     instrumentObject(
         window.Document.prototype,
         "Document",
-        {'propertiesToInstrument': propertiesToInstrument}
+        {'propertiesToInstrument': propertiesToInstrument, logCallStack: true}
     );
    
     var includedPropertiesForEventTarget = [ "addEventListener"];
@@ -768,8 +827,9 @@ function getPageScript() {
     instrumentObject(
         window.EventTarget.prototype,
         "EventTarget",
-        {'propertiesToInstrument': includedPropertiesForEventTarget},
-        {'excludedProperties': excludedPropertiesForEventTarget}
+        {'propertiesToInstrument': includedPropertiesForEventTarget,
+        'excludedProperties': excludedPropertiesForEventTarget,
+        logCallStack: true}
     );
 
     // Access to Performance methods
@@ -777,7 +837,7 @@ function getPageScript() {
     instrumentObject(
         window.Performance.prototype,
         "Performance",
-        {'propertiesToInstrument': performanceePropertiesToInstrument}
+        {'propertiesToInstrument': performanceePropertiesToInstrument, logCallStack: true}
     );
 
     console.log("Successfully started all instrumentation.");

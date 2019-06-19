@@ -361,6 +361,13 @@ function logWithResponseBody(respEvent, update) {
   });
 }
 
+function isDocument(httpChannel) {
+  // Return true if this channel is loading a subdocument
+  // See: http://searchfox.org/mozilla-central/source/dom/base/nsIContentPolicyBase.idl
+  var contentPolicyType = httpChannel.loadInfo.externalContentPolicyType;
+  return contentPolicyType == 6 || contentPolicyType == 7; // document or subdocument
+}
+
 function isJS(httpChannel) {
   // Return true if this channel is loading javascript
   // We rely mostly on the content policy type to filter responses
@@ -394,7 +401,7 @@ function isJS(httpChannel) {
 
 // Instrument HTTP responses
 var httpResponseHandler = function(respEvent, isCached, crawlID,
-                                   saveJavascript, saveAllContent) {
+                                   saveJavascript, saveAllContent, saveDocuments) {
   var httpChannel = respEvent.subject.QueryInterface(Ci.nsIHttpChannel);
 
   // http_responses table schema:
@@ -453,6 +460,8 @@ var httpResponseHandler = function(respEvent, isCached, crawlID,
     logWithResponseBody(respEvent, update);
   } else if (saveJavascript && isJS(httpChannel)) {
     logWithResponseBody(respEvent, update);
+  } else if (saveDocuments && isDocument(httpChannel)) {
+    logWithResponseBody(respEvent, update);
   } else {
     loggingDB.saveRecord("http_responses", update);
   }
@@ -462,21 +471,21 @@ var httpResponseHandler = function(respEvent, isCached, crawlID,
  * Attach handlers to event monitor
  */
 
-exports.run = function(crawlID, saveJavascript, saveAllContent) {
+exports.run = function(crawlID, saveJavascript, saveAllContent, saveDocuments) {
   // Monitor http events
   events.on("http-on-modify-request", function(event) {
     httpRequestHandler(event, crawlID);
   }, true);
 
   events.on("http-on-examine-response", function(event) {
-    httpResponseHandler(event, false, crawlID, saveJavascript, saveAllContent);
+    httpResponseHandler(event, false, crawlID, saveJavascript, saveAllContent, saveDocuments);
   }, true);
 
   events.on("http-on-examine-cached-response", function(event) {
-    httpResponseHandler(event, true, crawlID, saveJavascript, saveAllContent);
+    httpResponseHandler(event, true, crawlID, saveJavascript, saveAllContent, saveDocuments);;
   }, true);
 
   events.on("http-on-examine-merged-response", function(event) {
-    httpResponseHandler(event, true, crawlID, saveJavascript, saveAllContent);
+    httpResponseHandler(event, true, crawlID, saveJavascript, saveAllContent, saveDocuments);
   }, true);
 };

@@ -188,7 +188,7 @@ class LocalAggregator(BaseAggregator):
         # (if content saving is enabled on any browser)
         self.ldb_enabled = False
         for params in browser_params:
-            if params['save_javascript'] or params['save_all_content']:
+            if params['save_javascript'] or params['save_all_content'] or params['save_documents']:
                 self.ldb_enabled = True
                 break
 

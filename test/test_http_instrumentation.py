@@ -485,13 +485,32 @@ class TestHTTPInstrument(OpenWPMTest):
         self.visit(test_url, str(tmpdir), sleep_after=3)
         expected_hashes = {'973e28500d500eab2c27b3bc55c8b621',
                            'a6475af1ad58b55cf781ca5e1218c7b1'}
-        for chash, content in db_utils.get_javascript_content(str(tmpdir)):
+        for chash, content in db_utils.get_content(str(tmpdir)):
             chash = chash.decode('ascii')
             pyhash = md5(content).hexdigest()
             assert pyhash == chash  # Verify expected key (md5 of content)
             assert chash in expected_hashes
             expected_hashes.remove(chash)
         assert len(expected_hashes) == 0  # All expected hashes have been seen
+
+    def test_document_saving(self, tmpdir):
+        """ check that document content is saved and hashed correctly """
+        test_url = utilities.BASE_TEST_URL + '/http_test_page.html'
+        expected_hashes = {'0dc4da706021a4cb9d2cd5f0dae686e8',
+                           'cd7aff5e8882cdf4ec2f52d634a93470'}
+        manager_params, browser_params = self.get_test_config(str(tmpdir))
+        browser_params[0]['http_instrument'] = True
+        browser_params[0]['save_documents'] = True
+        manager = TaskManager.TaskManager(manager_params, browser_params)
+        manager.get(url=test_url, sleep=1)
+        manager.close()
+        for chash, content in db_utils.get_content(str(tmpdir)):
+            chash = chash.decode('ascii')
+            pyhash = md5(content).hexdigest()
+            assert pyhash == chash  # Verify expected key (md5 of content)
+            assert chash in expected_hashes
+            expected_hashes.remove(chash)
+        assert len(expected_hashes) == 0 # All expected hashes have been seen
 
     def test_content_saving(self, tmpdir):
         """ check that content is saved and hashed correctly """
@@ -516,7 +535,7 @@ class TestHTTPInstrument(OpenWPMTest):
             disk_content[chash] = content
 
         ldb_content = dict()
-        for chash, content in db_utils.get_javascript_content(str(tmpdir)):
+        for chash, content in db_utils.get_content(str(tmpdir)):
             chash = chash.decode('ascii')
             ldb_content[chash] = content.decode('utf-8')
 

@@ -43,3 +43,7 @@ RUN sudo chown -R user:user /opt/OpenWPM/
 
 RUN cd /opt/OpenWPM/ \
      && ./install.sh --no-flash
+
+RUN sudo mkdir /opt/firefox/ && \
+    sudo mv /opt/OpenWPM/firefox-bin /opt/firefox/firefox-bin
+ENV FIREFOX_BINARY=/opt/firefox/firefox-bin/firefox-bin
