@@ -85,6 +85,12 @@ def privacy(browser_params, fp, fo, root_dir, browser_profile_path):
         shutil.copy(os.path.join(root_dir, 'firefox_extensions',
                                  'ublock_origin', 'storage.js'), ublock_dir)
 
+    if browser_params['caching_disabled']:
+        # Disable browser cache
+        fo.set_preference("browser.cache.disk.enable", False)
+        fo.set_preference("browser.cache.memory.enable", False)
+        fo.set_preference("browser.cache.offline.enable", False)
+        
 
 def optimize_prefs(fo):
     """

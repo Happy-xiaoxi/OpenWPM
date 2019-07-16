@@ -34,6 +34,7 @@ for i in range(NUM_BROWSERS):
     browser_params[i]['http_instrument'] = True
     browser_params[i]['headless'] = True
     browser_params[i]['save_documents'] = True
+    browser_params[i]['caching_disabled'] = True
 
 # Update TaskManager configuration (use this for crawl-wide settings)
 manager_params['data_directory'] = '~/Desktop/'
